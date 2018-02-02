@@ -131,1056 +131,908 @@ extension Node : CustomStringConvertible {
         return String(typeName.droppingSuffix(syntaxCodeUnits))!
     }
 }
-final class Rewriter : SyntaxRewriter {
+
+final class Formatter : SyntaxVisitor {
     var tokens: [(String, location: SourceLoc, ancestors: [Node])] = []
     var inputLocation = SourceLoc()
     var indentation = 0
     var ancestors: [Node] = []
 
-    override func visit(_ node: SwiftSyntax.UnknownDeclSyntax) -> DeclSyntax {
+    override func visit(_ node: SwiftSyntax.UnknownDeclSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.UnknownExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.UnknownExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.UnknownStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.UnknownStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.UnknownTypeSyntax) -> TypeSyntax {
+    override func visit(_ node: SwiftSyntax.UnknownTypeSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.UnknownPatternSyntax) -> PatternSyntax {
+    override func visit(_ node: SwiftSyntax.UnknownPatternSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.InOutExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.InOutExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.PoundColumnExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.PoundColumnExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.TryExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.TryExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.DeclNameArgumentSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.DeclNameArgumentSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.DeclNameArgumentsSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.DeclNameArgumentsSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.IdentifierExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.IdentifierExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.SuperRefExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.SuperRefExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.NilLiteralExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.NilLiteralExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.DiscardAssignmentExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.DiscardAssignmentExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.AssignmentExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.AssignmentExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.SequenceExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.SequenceExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.PoundLineExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.PoundLineExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.PoundFileExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.PoundFileExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.PoundFunctionExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.PoundFunctionExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.PoundDsohandleExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.PoundDsohandleExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.SymbolicReferenceExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.SymbolicReferenceExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.PrefixOperatorExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.PrefixOperatorExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.BinaryOperatorExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.BinaryOperatorExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.FloatLiteralExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.FloatLiteralExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.TupleExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.TupleExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ArrayExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.ArrayExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.DictionaryExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.DictionaryExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ImplicitMemberExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.ImplicitMemberExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.FunctionCallArgumentSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.FunctionCallArgumentSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.TupleElementSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.TupleElementSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ArrayElementSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.ArrayElementSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.DictionaryElementSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.DictionaryElementSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.IntegerLiteralExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.IntegerLiteralExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.StringLiteralExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.StringLiteralExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.BooleanLiteralExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.BooleanLiteralExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.TernaryExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.TernaryExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.MemberAccessExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.MemberAccessExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.DotSelfExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.DotSelfExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.IsExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.IsExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.AsExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.AsExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.TypeExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.TypeExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ClosureCaptureItemSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.ClosureCaptureItemSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ClosureCaptureSignatureSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.ClosureCaptureSignatureSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ClosureParamSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.ClosureParamSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ClosureSignatureSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.ClosureSignatureSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ClosureExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.ClosureExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.UnresolvedPatternExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.UnresolvedPatternExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.FunctionCallExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.FunctionCallExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.SubscriptExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.SubscriptExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.OptionalChainingExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.OptionalChainingExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ForcedValueExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.ForcedValueExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.PostfixUnaryExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.PostfixUnaryExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.StringSegmentSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.StringSegmentSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ExpressionSegmentSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.ExpressionSegmentSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.StringInterpolationExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.StringInterpolationExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.KeyPathExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.KeyPathExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ObjcNamePieceSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.ObjcNamePieceSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ObjcKeyPathExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.ObjcKeyPathExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.EditorPlaceholderExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.EditorPlaceholderExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ObjectLiteralExprSyntax) -> ExprSyntax {
+    override func visit(_ node: SwiftSyntax.ObjectLiteralExprSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.TypeInitializerClauseSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.TypeInitializerClauseSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.TypealiasDeclSyntax) -> DeclSyntax {
+    override func visit(_ node: SwiftSyntax.TypealiasDeclSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ParameterClauseSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.ParameterClauseSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ReturnClauseSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.ReturnClauseSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.FunctionSignatureSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.FunctionSignatureSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ElseifDirectiveClauseSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.ElseifDirectiveClauseSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.IfConfigDeclSyntax) -> DeclSyntax {
+    override func visit(_ node: SwiftSyntax.IfConfigDeclSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.DeclModifierSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.DeclModifierSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.InheritedTypeSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.InheritedTypeSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.TypeInheritanceClauseSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.TypeInheritanceClauseSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ClassDeclSyntax) -> DeclSyntax {
+    override func visit(_ node: SwiftSyntax.ClassDeclSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.StructDeclSyntax) -> DeclSyntax {
+    override func visit(_ node: SwiftSyntax.StructDeclSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ProtocolDeclSyntax) -> DeclSyntax {
+    override func visit(_ node: SwiftSyntax.ProtocolDeclSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ExtensionDeclSyntax) -> DeclSyntax {
+    override func visit(_ node: SwiftSyntax.ExtensionDeclSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.MemberDeclBlockSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.MemberDeclBlockSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.SourceFileSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.SourceFileSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.TopLevelCodeDeclSyntax) -> DeclSyntax {
+    override func visit(_ node: SwiftSyntax.TopLevelCodeDeclSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.InitializerClauseSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.InitializerClauseSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.FunctionParameterSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.FunctionParameterSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.FunctionDeclSyntax) -> DeclSyntax {
+    override func visit(_ node: SwiftSyntax.FunctionDeclSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ElseDirectiveClauseSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.ElseDirectiveClauseSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.AccessLevelModifierSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.AccessLevelModifierSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.AccessPathComponentSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.AccessPathComponentSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ImportDeclSyntax) -> DeclSyntax {
+    override func visit(_ node: SwiftSyntax.ImportDeclSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.AccessorParameterSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.AccessorParameterSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.AccessorDeclSyntax) -> DeclSyntax {
+    override func visit(_ node: SwiftSyntax.AccessorDeclSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.AccessorBlockSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.AccessorBlockSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.PatternBindingSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.PatternBindingSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.VariableDeclSyntax) -> DeclSyntax {
+    override func visit(_ node: SwiftSyntax.VariableDeclSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.AttributeSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.AttributeSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ContinueStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.ContinueStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.WhileStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.WhileStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.DeferStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.DeferStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ExpressionStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.ExpressionStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.RepeatWhileStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.RepeatWhileStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.GuardStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.GuardStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.WhereClauseSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.WhereClauseSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ForInStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.ForInStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.SwitchStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.SwitchStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.DoStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.DoStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ReturnStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.ReturnStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.FallthroughStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.FallthroughStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.BreakStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.BreakStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.CodeBlockSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.CodeBlockSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ConditionElementSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.ConditionElementSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.AvailabilityConditionSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.AvailabilityConditionSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.MatchingPatternConditionSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.MatchingPatternConditionSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.OptionalBindingConditionSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.OptionalBindingConditionSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.DeclarationStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.DeclarationStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ThrowStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.ThrowStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.IfStmtSyntax) -> StmtSyntax {
+    override func visit(_ node: SwiftSyntax.IfStmtSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ElseIfContinuationSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.ElseIfContinuationSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ElseBlockSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.ElseBlockSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.SwitchCaseSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.SwitchCaseSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.SwitchDefaultLabelSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.SwitchDefaultLabelSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.CaseItemSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.CaseItemSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.SwitchCaseLabelSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.SwitchCaseLabelSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.CatchClauseSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.CatchClauseSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.GenericWhereClauseSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.GenericWhereClauseSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.SameTypeRequirementSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.SameTypeRequirementSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.GenericParameterSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.GenericParameterSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.GenericParameterClauseSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.GenericParameterClauseSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ConformanceRequirementSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.ConformanceRequirementSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.SimpleTypeIdentifierSyntax) -> TypeSyntax {
+    override func visit(_ node: SwiftSyntax.SimpleTypeIdentifierSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.MemberTypeIdentifierSyntax) -> TypeSyntax {
+    override func visit(_ node: SwiftSyntax.MemberTypeIdentifierSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ArrayTypeSyntax) -> TypeSyntax {
+    override func visit(_ node: SwiftSyntax.ArrayTypeSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.DictionaryTypeSyntax) -> TypeSyntax {
+    override func visit(_ node: SwiftSyntax.DictionaryTypeSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.MetatypeTypeSyntax) -> TypeSyntax {
+    override func visit(_ node: SwiftSyntax.MetatypeTypeSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.OptionalTypeSyntax) -> TypeSyntax {
+    override func visit(_ node: SwiftSyntax.OptionalTypeSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ImplicitlyUnwrappedOptionalTypeSyntax) -> TypeSyntax {
+    override func visit(_ node: SwiftSyntax.ImplicitlyUnwrappedOptionalTypeSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.CompositionTypeElementSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.CompositionTypeElementSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.CompositionTypeSyntax) -> TypeSyntax {
+    override func visit(_ node: SwiftSyntax.CompositionTypeSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.TupleTypeElementSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.TupleTypeElementSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.TupleTypeSyntax) -> TypeSyntax {
+    override func visit(_ node: SwiftSyntax.TupleTypeSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.FunctionTypeSyntax) -> TypeSyntax {
+    override func visit(_ node: SwiftSyntax.FunctionTypeSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.AttributedTypeSyntax) -> TypeSyntax {
+    override func visit(_ node: SwiftSyntax.AttributedTypeSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.GenericArgumentSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.GenericArgumentSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.GenericArgumentClauseSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.GenericArgumentClauseSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.TypeAnnotationSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.TypeAnnotationSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.EnumCasePatternSyntax) -> PatternSyntax {
+    override func visit(_ node: SwiftSyntax.EnumCasePatternSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.IsTypePatternSyntax) -> PatternSyntax {
+    override func visit(_ node: SwiftSyntax.IsTypePatternSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.OptionalPatternSyntax) -> PatternSyntax {
+    override func visit(_ node: SwiftSyntax.OptionalPatternSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.IdentifierPatternSyntax) -> PatternSyntax {
+    override func visit(_ node: SwiftSyntax.IdentifierPatternSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.AsTypePatternSyntax) -> PatternSyntax {
+    override func visit(_ node: SwiftSyntax.AsTypePatternSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.TuplePatternSyntax) -> PatternSyntax {
+    override func visit(_ node: SwiftSyntax.TuplePatternSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.WildcardPatternSyntax) -> PatternSyntax {
+    override func visit(_ node: SwiftSyntax.WildcardPatternSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.TuplePatternElementSyntax) -> Syntax {
+    override func visit(_ node: SwiftSyntax.TuplePatternElementSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ExpressionPatternSyntax) -> PatternSyntax {
+    override func visit(_ node: SwiftSyntax.ExpressionPatternSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ node: SwiftSyntax.ValueBindingPatternSyntax) -> PatternSyntax {
+    override func visit(_ node: SwiftSyntax.ValueBindingPatternSyntax) {
         ancestors.append(Node(node))
-        let r = super.visit(node)
+        super.visit(node)
         ancestors.removeLast()
-        return r
     }
 
-    override func visit(_ token: TokenSyntax) -> Syntax {
+    override func visit(_ token: TokenSyntax) {
         for t in token.leadingTrivia {
             inputLocation.traverse(t)
         }
@@ -1205,9 +1057,8 @@ final class Rewriter : SyntaxRewriter {
 let currentFile = URL(fileURLWithPath: #file)
 let currentFileContents = try String(contentsOf: currentFile)
 let parsed = try SourceFileSyntax.parse(currentFile)
-let r = Rewriter()
-_ = r.visit(parsed)
-for (text, loc, ancestors) in r.tokens {
+let f = Formatter()
+f.visit(parsed)
+for (text, loc, ancestors) in f.tokens {
     print("\(#file)\(loc):, '\(text)' -> \(ancestors)")
 }
-print(r.tokens)
