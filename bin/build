@@ -1,0 +1,12 @@
+#!/usr/bin/env bash -e -o pipefail
+DEFAULT_SWIFT_FORMAT="$HOME/src/swift-format"  # What to build when invoked outside a git tree.
+top=$(git rev-parse --show-toplevel 2>/dev/null || echo "$DEFAULT_SWIFT_FORMAT")
+if [[ ! -e "${top}"/swift-format.xcodeproj ]] ; then top="$DEFAULT_SWIFT_FORMAT"; fi
+
+export TOOLCHAINS=org.swift.3020180130a
+xcrun swiftc -Onone -enforce-exclusivity=checked -DDEBUG -sdk $('xcrun' '--show-sdk-path' '--sdk' 'macosx') -g -swift-version 4 -j8 "$top"/swift-format/main.swift -o "$top"/tool
+"$top"/tool
+
+# -Xcc -I/Users/dave/Library/Developer/Xcode/DerivedData/swift-format-grgdlzwqhbdmeqeakuqrjtaxblaa/Build/Intermediates.noindex/swift-format.build/Debug/swift-format.build/swift-overrides.hmap -Xcc -iquote -Xcc /Users/dave/Library/Developer/Xcode/DerivedData/swift-format-grgdlzwqhbdmeqeakuqrjtaxblaa/Build/Intermediates.noindex/swift-format.build/Debug/swift-format.build/swift-format-generated-files.hmap -Xcc -I/Users/dave/Library/Developer/Xcode/DerivedData/swift-format-grgdlzwqhbdmeqeakuqrjtaxblaa/Build/Intermediates.noindex/swift-format.build/Debug/swift-format.build/swift-format-own-target-headers.hmap -Xcc -I/Users/dave/Library/Developer/Xcode/DerivedData/swift-format-grgdlzwqhbdmeqeakuqrjtaxblaa/Build/Intermediates.noindex/swift-format.build/Debug/swift-format.build/swift-format-all-target-headers.hmap -Xcc -iquote -Xcc /Users/dave/Library/Developer/Xcode/DerivedData/swift-format-grgdlzwqhbdmeqeakuqrjtaxblaa/Build/Intermediates.noindex/swift-format.build/Debug/swift-format.build/swift-format-project-headers.hmap -Xcc -I/Users/dave/Library/Developer/Xcode/DerivedData/swift-format-grgdlzwqhbdmeqeakuqrjtaxblaa/Build/Products/Debug/include -Xcc -I/Users/dave/Library/Developer/Xcode/DerivedData/swift-format-grgdlzwqhbdmeqeakuqrjtaxblaa/Build/Intermediates.noindex/swift-format.build/Debug/swift-format.build/DerivedSources/x86_64 -Xcc -I/Users/dave/Library/Developer/Xcode/DerivedData/swift-format-grgdlzwqhbdmeqeakuqrjtaxblaa/Build/Intermediates.noindex/swift-format.build/Debug/swift-format.build/DerivedSources -Xcc -DDEBUG=1 -emit-objc-header -emit-objc-header-path /Users/dave/Library/Developer/Xcode/DerivedData/swift-format-grgdlzwqhbdmeqeakuqrjtaxblaa/Build/Intermediates.noindex/swift-format.build/Debug/swift-format.build/Objects-normal/x86_64/swift_format-Swift.h -Xcc -working-directory/Users/dave/src/swift-format
+
+# xcodebuild build -toolchain org.swift.3020180130a -configuration Debug -sdk macosx10.13internal -project "${top}"/swift-format.xcodeproj -quiet -scheme swift-format
