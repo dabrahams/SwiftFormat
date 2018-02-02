@@ -9,9 +9,14 @@
 import Foundation
 import SwiftSyntax
 
+struct X {
+    func fubar() -> X { return self }
+}
+
 func genericFunc<T : Collection, U: Collection>(x: T, y: U) -> (T.Element?, U.Element?)
 where T.Index == U.Index, U.Iterator == IndexingIterator<[Int]> {
     _ = 3 * 4 + (5 * 6)
+    X().fubar().fubar().fubar()
     return (x.first, y.first)
 }
 
@@ -152,7 +157,6 @@ final class Formatter : SyntaxVisitor {
 
     override func visit(_ node: SwiftSyntax.UnknownDeclSyntax) {
         withSyntacticContext(node) { super.visit(node) }
-
     }
 
     override func visit(_ node: SwiftSyntax.UnknownExprSyntax) {
@@ -196,7 +200,7 @@ final class Formatter : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.SuperRefExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        withSyntacticContext(node, indent: false) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.NilLiteralExprSyntax) {
@@ -776,5 +780,6 @@ let parsed = try SourceFileSyntax.parse(currentFile)
 let f = Formatter()
 f.visit(parsed)
 for (text, loc, indentation, ancestors) in f.tokens {
-    print("\(#file)\(loc):, \(String(repeating: "  ", count: indentation)) '\(text)' \t -> \(ancestors)")
+    print("\(#file)\(loc):,\t\(String(repeating: "    ", count: indentation)) '\(text)' \t\t -> \(ancestors)")
+    // print(String(repeating: "    ", count: indentation), text)
 }
