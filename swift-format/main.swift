@@ -11,6 +11,7 @@ import SwiftSyntax
 
 func genericFunc<T : Collection, U: Collection>(x: T, y: U) -> (T.Element?, U.Element?)
 where T.Index == U.Index, U.Iterator == IndexingIterator<[Int]> {
+    _ = 3 * 4 + (5 * 6)
     return (x.first, y.first)
 }
 
