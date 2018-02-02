@@ -48,6 +48,37 @@ struct SourceLoc {
             traverse(s)
         }
     }
+
+    mutating func traverse(_ token: TokenSyntax) {
+        // DWA FIXME: this could be sped up by knowing the length of more tokens
+        switch token.tokenKind {
+        case .atSign,
+            .colon,
+            .semicolon,
+            .comma,
+            .period,
+            .equal,
+            .prefixPeriod,
+            .leftParen,
+            .rightParen,
+            .leftBrace,
+            .rightBrace,
+            .leftSquareBracket,
+            .rightSquareBracket,
+            .leftAngle,
+            .rightAngle,
+            .prefixAmpersand,
+            .postfixQuestionMark,
+            .infixQuestionMark,
+            .exclamationMark,
+            .backslash,
+            .stringQuote:
+            column += 1
+        case .arrow:
+            column += 2
+        default: traverse(token.text)
+        }
+    }
 }
 
 extension SourceLoc : CustomStringConvertible {
@@ -73,7 +104,7 @@ class Rewriter: SyntaxRewriter {
 
         tokens.append((token.text, location: inputLocation))
 
-        inputLocation.traverse(token.text)
+        inputLocation.traverse(token)
         for t in token.trailingTrivia {
             inputLocation.traverse(t)
         }
