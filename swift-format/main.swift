@@ -859,6 +859,15 @@ final class Reparser : SyntaxVisitor {
 
     override func visit(_ tok: TokenSyntax) {
         takeActions(&before, for: tok)
+
+        switch tok.tokenKind {
+        case .rightParen, .rightBrace, .rightSquareBracket, .rightAngle:
+            if ancestors.last!.syntax is UnknownStmtSyntax {
+                content.append(.dedent)
+            }
+        default: break
+        }
+
         for t in tok.leadingTrivia {
             inputLocation.traverse(t)
         }
@@ -875,6 +884,14 @@ final class Reparser : SyntaxVisitor {
 
         for t in tok.trailingTrivia {
             inputLocation.traverse(t)
+        }
+
+        switch tok.tokenKind {
+        case .leftParen, .leftBrace, .leftSquareBracket, .leftAngle:
+            if ancestors.last!.syntax is UnknownStmtSyntax {
+                content.append(.indent)
+            }
+        default: break
         }
 
         takeActions(&after, for: tok)
@@ -894,7 +911,7 @@ for x in p.content {
     case .dedent: indentation -= 1
     case .token(let t, _, let ancestors):
         _ = ancestors
-        print(String(repeating: "    ", count: indentation), t.text/*, "\t\t", ancestors*/)
+        print(String(repeating: "    ", count: indentation), t.text, "\t\t", ancestors)
     }
     // print("\(#file)\(loc):,\t\(String(repeating: "    ", count: indentation)) '\(token)' \t\t -> \(ancestors)")
     // print(String(repeating: "    ", count: indentation), token)
