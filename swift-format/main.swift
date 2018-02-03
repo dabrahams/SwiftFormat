@@ -11,12 +11,17 @@ import SwiftSyntax
 
 struct X {
     func fubar() -> X { return self }
+    var myself: X { return self }
 }
 
 func genericFunc<T : Collection, U: Collection>(x: T, y: U) -> (T.Element?, U.Element?)
 where T.Index == U.Index, U.Iterator == IndexingIterator<[Int]> {
     _ = 3 * 4 + (5 * 6)
-    X().fubar().fubar().fubar() // trailing comment
+    _ = X().fubar().fubar().fubar() // trailing comment
+    _ = X().myself.myself
+    _ = X().myself.fubar().myself.fubar()
+    _ = X().fubar().myself.fubar().myself
+
     return (x.first, y.first)
 }
 
@@ -105,15 +110,23 @@ extension SourceLoc : CustomDebugStringConvertible {
 }
 
 struct Node {
-    init(_ kind: Syntax.Type) {
-        self.kind = kind
+    init<T : Syntax & Hashable>(_ x: T) {
+        syntax = x
+        id = x.id
     }
 
-    init<T : Syntax>(_ node: T) {
-        self.init(T.self)
+    var kind: Syntax.Type {
+        return type(of: syntax)
     }
 
-    let kind: Syntax.Type
+    let syntax: Syntax
+    let id: Int
+}
+
+extension Node : Equatable {
+    static func == (x: Node, y: Node) -> Bool {
+        return x.id == y.id
+    }
 }
 
 extension BidirectionalCollection where Element : Equatable {
@@ -332,6 +345,12 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.MemberAccessExprSyntax) {
+        before[node.dot.id] = 1
+        let top = ancestors.last!
+        let closer = top.syntax is SwiftSyntax.FunctionCallExprSyntax
+           ? top.id : node.id
+        after[closer] = -1
+
         visitChildren(node) { super.visit(node) }
     }
 
