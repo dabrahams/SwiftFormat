@@ -16,7 +16,7 @@ struct X {
 func genericFunc<T : Collection, U: Collection>(x: T, y: U) -> (T.Element?, U.Element?)
 where T.Index == U.Index, U.Iterator == IndexingIterator<[Int]> {
     _ = 3 * 4 + (5 * 6)
-    X().fubar().fubar().fubar()
+    X().fubar().fubar().fubar() // trailing comment
     return (x.first, y.first)
 }
 
@@ -138,638 +138,670 @@ extension Node : CustomStringConvertible {
     }
 }
 
-final class Formatter : SyntaxVisitor {
-    var tokens: [(String, location: SourceLoc, indentation: Int, ancestors: [Node])] = []
-    var inputLocation = SourceLoc()
-    var indentation = 0
-    var ancestors: [Node] = []
+struct Token {
+    let syntax: TokenSyntax
+    let location: SourceLoc
+}
 
-    func withSyntacticContext<T : Syntax, R>(
-        _ node: T, indent: Bool = true, _ body: ()->R
+enum Structure {
+case indent
+case dedent
+case token(syntax: TokenSyntax, location: SourceLoc)
+}
+
+typealias SyntaxID = Int
+
+extension Syntax where Self : Hashable {
+    var id: SyntaxID { return hashValue }
+}
+
+final class Reparser : SyntaxVisitor {
+    var content: [Structure] = []
+    var inputLocation = SourceLoc()
+    var ancestors: [Node] = []
+    typealias Actions = [SyntaxID : Int8]
+    var before = Actions()
+    var after = Actions()
+
+    func takeActions<T : Syntax & Hashable>(_ a: inout Actions, for s: T) {
+        if var delta = a.removeValue(forKey: s.id) {
+            while delta > 0 {
+                content.append(.indent)
+                delta -= 1
+            }
+            while delta < 0 {
+                delta += 1
+                content.append(.dedent)
+            }
+        }
+    }
+
+    func visitChildren<T : Syntax & Hashable, R>(
+        _ node: T, _ body: ()->R
     ) -> R {
+        takeActions(&before, for: node)
         ancestors.append(Node(node))
-        indentation += indent ? 1 : 0
         let r = body()
-        indentation -= indent ? 1 : 0
         ancestors.removeLast()
+        takeActions(&after, for: node)
         return r
     }
 
     override func visit(_ node: SwiftSyntax.UnknownDeclSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.UnknownExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.UnknownStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.UnknownTypeSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.UnknownPatternSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.InOutExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.PoundColumnExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.TryExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DeclNameArgumentSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DeclNameArgumentsSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.IdentifierExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.SuperRefExprSyntax) {
-        withSyntacticContext(node, indent: false) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.NilLiteralExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DiscardAssignmentExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.AssignmentExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.SequenceExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.PoundLineExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.PoundFileExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.PoundFunctionExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.PoundDsohandleExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.SymbolicReferenceExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.PrefixOperatorExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.BinaryOperatorExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.FloatLiteralExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.TupleExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ArrayExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DictionaryExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ImplicitMemberExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.FunctionCallArgumentSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.TupleElementSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ArrayElementSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DictionaryElementSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.IntegerLiteralExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.StringLiteralExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.BooleanLiteralExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.TernaryExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.MemberAccessExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DotSelfExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.IsExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.AsExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.TypeExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ClosureCaptureItemSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ClosureCaptureSignatureSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ClosureParamSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ClosureSignatureSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ClosureExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.UnresolvedPatternExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.FunctionCallExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.SubscriptExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.OptionalChainingExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ForcedValueExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.PostfixUnaryExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.StringSegmentSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ExpressionSegmentSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.StringInterpolationExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.KeyPathExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ObjcNamePieceSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ObjcKeyPathExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.EditorPlaceholderExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ObjectLiteralExprSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.TypeInitializerClauseSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.TypealiasDeclSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ParameterClauseSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ReturnClauseSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.FunctionSignatureSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ElseifDirectiveClauseSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.IfConfigDeclSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DeclModifierSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.InheritedTypeSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.TypeInheritanceClauseSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ClassDeclSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.StructDeclSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ProtocolDeclSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ExtensionDeclSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.MemberDeclBlockSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.SourceFileSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.TopLevelCodeDeclSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.InitializerClauseSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.FunctionParameterSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.FunctionDeclSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ElseDirectiveClauseSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.AccessLevelModifierSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.AccessPathComponentSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ImportDeclSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.AccessorParameterSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.AccessorDeclSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.AccessorBlockSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.PatternBindingSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.VariableDeclSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.AttributeSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ContinueStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.WhileStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DeferStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ExpressionStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.RepeatWhileStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.GuardStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.WhereClauseSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ForInStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.SwitchStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DoStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ReturnStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.FallthroughStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.BreakStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.CodeBlockSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        after[node.openBrace.id] = 1
+        before[node.closeBrace.id] = -1
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ConditionElementSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.AvailabilityConditionSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.MatchingPatternConditionSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.OptionalBindingConditionSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DeclarationStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ThrowStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.IfStmtSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ElseIfContinuationSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ElseBlockSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.SwitchCaseSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.SwitchDefaultLabelSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.CaseItemSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.SwitchCaseLabelSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.CatchClauseSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.GenericWhereClauseSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.SameTypeRequirementSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.GenericParameterSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.GenericParameterClauseSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        after[node.leftAngleBracket.id] = 1
+        before[node.rightAngleBracket.id] = -1
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ConformanceRequirementSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.SimpleTypeIdentifierSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.MemberTypeIdentifierSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ArrayTypeSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DictionaryTypeSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.MetatypeTypeSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.OptionalTypeSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ImplicitlyUnwrappedOptionalTypeSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.CompositionTypeElementSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.CompositionTypeSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.TupleTypeElementSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.TupleTypeSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.FunctionTypeSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.AttributedTypeSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.GenericArgumentSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.GenericArgumentClauseSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.TypeAnnotationSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.EnumCasePatternSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.IsTypePatternSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.OptionalPatternSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.IdentifierPatternSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.AsTypePatternSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.TuplePatternSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.WildcardPatternSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.TuplePatternElementSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ExpressionPatternSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ValueBindingPatternSyntax) {
-        withSyntacticContext(node) { super.visit(node) }
+        visitChildren(node) { super.visit(node) }
     }
 
-    override func visit(_ token: TokenSyntax) {
-        for t in token.leadingTrivia {
+    override func visit(_ tok: TokenSyntax) {
+        takeActions(&before, for: tok)
+        for t in tok.leadingTrivia {
             inputLocation.traverse(t)
         }
 
-        tokens.append(
-            (
-                token.text,
-                indentation: indentation,
-                location: inputLocation,
-                ancestors: ancestors
-            ))
+        content.append(.token(syntax: tok, location: inputLocation))
 
-        inputLocation.traverseNonTrivia(token)
-        for t in token.trailingTrivia {
+        inputLocation.traverseNonTrivia(tok)
+
+        for t in tok.trailingTrivia {
             inputLocation.traverse(t)
         }
 
-        return super.visit(token)
+        takeActions(&after, for: tok)
     }
 }
 
@@ -777,9 +809,16 @@ final class Formatter : SyntaxVisitor {
 let currentFile = URL(fileURLWithPath: #file)
 let currentFileContents = try String(contentsOf: currentFile)
 let parsed = try SourceFileSyntax.parse(currentFile)
-let f = Formatter()
-f.visit(parsed)
-for (text, loc, indentation, ancestors) in f.tokens {
-    print("\(#file)\(loc):,\t\(String(repeating: "    ", count: indentation)) '\(text)' \t\t -> \(ancestors)")
-    // print(String(repeating: "    ", count: indentation), text)
+let p = Reparser()
+p.visit(parsed)
+var indentation = 0
+for x in p.content {
+    switch x {
+    case .indent: indentation += 1
+    case .dedent: indentation -= 1
+    case .token(let t, let loc):
+        print(String(repeating: "    ", count: indentation), t.text)
+    }
+    // print("\(#file)\(loc):,\t\(String(repeating: "    ", count: indentation)) '\(token)' \t\t -> \(ancestors)")
+    // print(String(repeating: "    ", count: indentation), token)
 }
