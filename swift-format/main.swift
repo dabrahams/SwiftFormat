@@ -27,6 +27,11 @@ where T.Index == U.Index, U.Iterator == IndexingIterator<[Int]> {
     return (x.first, y.first)
 }
 
+func ascii16(_ x: UnicodeScalar) -> UTF16.CodeUnit {
+    assert(x.isASCII)
+    return UTF16.CodeUnit(x.value)
+}
+
 struct SourceLoc {
     var line = 0
     var column = 0
@@ -35,8 +40,8 @@ struct SourceLoc {
         for c in text.utf16 {
             switch c {
             case 0xb, 0xc: line += 1// vertical linefeed, formfeed
-            case "\n".utf16.first: line += 1; column = 0
-            case "\r".utf16.first: column = 0
+            case ascii16("\n"): line += 1; column = 0
+            case ascii16("\r"): column = 0
             default: column += 1
             }
         }
@@ -153,15 +158,54 @@ extension Node : CustomStringConvertible {
     }
 }
 
+extension TokenSyntax {
+    /// True iff `self` might be mis-tokenized if placed next to an 'a' with no
+    /// intervening whitespace.
+    var isIdentifierLike: Bool {
+        // DWA FIXME: This might be optimized by knowing more token kinds...
+        if case .identifier(_) = tokenKind { return true }
+
+        // ...but we should retain this fallback for resilience as the language
+        // evolves.
+
+        func isKnownIdentifierCodeUnit(_ c: UTF16.CodeUnit) -> Bool {
+            switch c {
+            case ascii16("_"),
+                ascii16("a")...ascii16("z"),
+                ascii16("A")...ascii16("Z"),
+                ascii16("0")...ascii16("9"): return true
+            default: return false
+            }
+        }
+
+        let codeUnits = text.utf16
+
+        if let first = codeUnits.first {
+            if isKnownIdentifierCodeUnit(first) { return true }
+        }
+        if let last = codeUnits.last {
+            if isKnownIdentifierCodeUnit(last) { return true }
+        }
+        return false
+    }
+}
+
 struct Token {
     let syntax: TokenSyntax
     let location: SourceLoc
     let ancestors: [Node]
 }
 
+struct Injection {
+    var whitespaceRequired: Bool = false
+    var dedent: Int16 = 0
+    var indent: Int16 = 0
+}
+
 enum Structure {
 case indent
 case dedent
+case whitespace
 case token(syntax: TokenSyntax, location: SourceLoc, ancestors: [Node])
 }
 
@@ -171,35 +215,57 @@ extension Syntax where Self : Hashable {
     var id: SyntaxID { return hashValue }
 }
 
+struct LazyDictionary<K : Hashable, V> {
+    init(default: V) {
+        defaultValue = { _ in `default` }
+    }
+    init(default: @escaping (K)->V) {
+        defaultValue = `default`
+    }
+
+    subscript(key: K) -> V {
+        get {
+            return impl[key] ?? defaultValue(key)
+        }
+        set {
+            impl[key] = newValue
+        }
+    }
+
+    mutating func removeValue(forKey k: K) -> V? {
+        return impl.removeValue(forKey: k)
+    }
+
+    var defaultValue: (K)->V
+    var impl: [K : V] = [:]
+}
+
 final class Reparser : SyntaxVisitor {
     var content: [Structure] = []
     var inputLocation = SourceLoc()
     var ancestors: [Node] = []
-    typealias Actions = [SyntaxID : Int8]
-    var before = Actions()
-    var after = Actions()
+    var previousToken: TokenSyntax? = nil
+    typealias Injections = LazyDictionary<SyntaxID, Injection>
 
-    func takeActions<T : Syntax & Hashable>(_ a: inout Actions, for s: T) {
-        if var delta = a.removeValue(forKey: s.id) {
-            while delta > 0 {
-                content.append(.indent)
-                delta -= 1
-            }
-            while delta < 0 {
-                delta += 1
-                content.append(.dedent)
-            }
+    var before = Injections(default: Injection())
+    var after = Injections(default: Injection())
+
+    func apply<T : Syntax & Hashable>(_ a: inout Injections, to s: T) {
+        if let i = a.removeValue(forKey: s.id) {
+            for _ in 0..<i.dedent { content.append(.dedent) }
+            if i.whitespaceRequired { content.append(.whitespace) }
+            for _ in 0..<i.indent { content.append(.indent) }
         }
     }
 
     func visitChildren<T : Syntax & Hashable, R>(
         _ node: T, _ body: ()->R
     ) -> R {
-        takeActions(&before, for: node)
+        apply(&before, to: node)
         ancestors.append(Node(node))
         let r = body()
         ancestors.removeLast()
-        takeActions(&after, for: node)
+        apply(&after, to: node)
         return r
     }
 
@@ -240,8 +306,8 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.DeclNameArgumentsSyntax) {
-        after[node.leftParen.id] = 1
-        before[node.rightParen.id] = -1
+        after[node.leftParen.id].indent += 1
+        before[node.rightParen.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -294,6 +360,8 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.BinaryOperatorExprSyntax) {
+        before[node.operatorToken.id].whitespaceRequired = true
+        after[node.operatorToken.id].whitespaceRequired = true
         visitChildren(node) { super.visit(node) }
     }
 
@@ -302,20 +370,20 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.TupleExprSyntax) {
-        after[node.leftParen.id] = 1
-        before[node.rightParen.id] = -1
+        after[node.leftParen.id].indent += 1
+        before[node.rightParen.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ArrayExprSyntax) {
-        after[node.leftSquare.id] = 1
-        before[node.rightSquare.id] = -1
+        after[node.leftSquare.id].indent += 1
+        before[node.rightSquare.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DictionaryExprSyntax) {
-        after[node.leftSquare.id] = 1
-        before[node.rightSquare.id] = -1
+        after[node.leftSquare.id].indent += 1
+        before[node.rightSquare.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -356,11 +424,11 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.MemberAccessExprSyntax) {
-        before[node.dot.id] = 1
+        before[node.dot.id].indent += 1
         let top = ancestors.last!
         let closer = top.syntax is SwiftSyntax.FunctionCallExprSyntax
             ? top.id : node.id
-        after[closer] = -1
+        after[closer].dedent += 1
 
         visitChildren(node) { super.visit(node) }
     }
@@ -386,8 +454,8 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.ClosureCaptureSignatureSyntax) {
-        after[node.leftSquare.id] = 1
-        before[node.rightSquare.id] = -1
+        after[node.leftSquare.id].indent += 1
+        before[node.rightSquare.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -400,8 +468,8 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.ClosureExprSyntax) {
-        after[node.signature.map { $0.id } ?? node.leftBrace.id] = 1
-        before[node.rightBrace.id] = -1
+        after[node.signature.map { $0.id } ?? node.leftBrace.id].indent += 1
+        before[node.rightBrace.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -411,15 +479,15 @@ final class Reparser : SyntaxVisitor {
 
     override func visit(_ node: SwiftSyntax.FunctionCallExprSyntax) {
         if let l = node.leftParen, let r = node.rightParen {
-            after[l.id] = 1
-            before[r.id] = -1
+            after[l.id].indent += 1
+            before[r.id].dedent += 1
         }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.SubscriptExprSyntax) {
-        after[node.leftBracket.id] = 1
-        before[node.rightBracket.id] = -1
+        after[node.leftBracket.id].indent += 1
+        before[node.rightBracket.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -440,8 +508,8 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.ExpressionSegmentSyntax) {
-        after[node.leftParen.id] = 1
-        before[node.rightParen.id] = -1
+        after[node.leftParen.id].indent += 1
+        before[node.rightParen.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -458,8 +526,8 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.ObjcKeyPathExprSyntax) {
-        after[node.leftParen.id] = 1
-        before[node.rightParen.id] = -1
+        after[node.leftParen.id].indent += 1
+        before[node.rightParen.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -468,8 +536,8 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.ObjectLiteralExprSyntax) {
-        after[node.leftParen.id] = 1
-        before[node.rightParen.id] = -1
+        after[node.leftParen.id].indent += 1
+        before[node.rightParen.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -482,12 +550,14 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.ParameterClauseSyntax) {
-        after[node.leftParen.id] = 1
-        before[node.rightParen.id] = -1
+        after[node.leftParen.id].indent += 1
+        before[node.rightParen.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ReturnClauseSyntax) {
+        after[node.arrow.id].whitespaceRequired = true
+        before[node.arrow.id].whitespaceRequired = true
         visitChildren(node) { super.visit(node) }
     }
 
@@ -532,8 +602,8 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.MemberDeclBlockSyntax) {
-        after[node.leftBrace.id] = 1
-        before[node.rightBrace.id] = -1
+        after[node.leftBrace.id].indent += 1
+        before[node.rightBrace.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -563,8 +633,8 @@ final class Reparser : SyntaxVisitor {
 
     override func visit(_ node: SwiftSyntax.AccessLevelModifierSyntax) {
         if let l = node.openParen, let r = node.closeParen {
-            after[l.id] = 1
-            before[r.id] = -1
+            after[l.id].indent += 1
+            before[r.id].dedent += 1
         }
         visitChildren(node) { super.visit(node) }
     }
@@ -578,8 +648,8 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.AccessorParameterSyntax) {
-        after[node.leftParen.id] = 1
-        before[node.rightParen.id] = -1
+        after[node.leftParen.id].indent += 1
+        before[node.rightParen.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -588,8 +658,8 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.AccessorBlockSyntax) {
-        after[node.leftBrace.id] = 1
-        before[node.rightBrace.id] = -1
+        after[node.leftBrace.id].indent += 1
+        before[node.rightBrace.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -658,8 +728,8 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.CodeBlockSyntax) {
-        after[node.openBrace.id] = 1
-        before[node.closeBrace.id] = -1
+        after[node.openBrace.id].indent += 1
+        before[node.closeBrace.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -732,8 +802,8 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.GenericParameterClauseSyntax) {
-        after[node.leftAngleBracket.id] = 1
-        before[node.rightAngleBracket.id] = -1
+        after[node.leftAngleBracket.id].indent += 1
+        before[node.rightAngleBracket.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -750,14 +820,14 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.ArrayTypeSyntax) {
-        after[node.leftSquareBracket.id] = 1
-        before[node.rightSquareBracket.id] = -1
+        after[node.leftSquareBracket.id].indent += 1
+        before[node.rightSquareBracket.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DictionaryTypeSyntax) {
-        after[node.leftSquareBracket.id] = 1
-        before[node.rightSquareBracket.id] = -1
+        after[node.leftSquareBracket.id].indent += 1
+        before[node.rightSquareBracket.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -786,14 +856,14 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.TupleTypeSyntax) {
-        after[node.leftParen.id] = 1
-        before[node.rightParen.id] = -1
+        after[node.leftParen.id].indent += 1
+        before[node.rightParen.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.FunctionTypeSyntax) {
-        after[node.leftParen.id] = 1
-        before[node.rightParen.id] = -1
+        after[node.leftParen.id].indent += 1
+        before[node.rightParen.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -806,8 +876,8 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.GenericArgumentClauseSyntax) {
-        after[node.leftAngleBracket.id] = 1
-        before[node.rightAngleBracket.id] = -1
+        after[node.leftAngleBracket.id].indent += 1
+        before[node.rightAngleBracket.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -836,8 +906,8 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.TuplePatternSyntax) {
-        after[node.openParen.id] = 1
-        before[node.closeParen.id] = -1
+        after[node.openParen.id].indent += 1
+        before[node.closeParen.id].dedent += 1
         visitChildren(node) { super.visit(node) }
     }
 
@@ -858,7 +928,7 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ tok: TokenSyntax) {
-        takeActions(&before, for: tok)
+        apply(&before, to: tok)
 
         switch tok.tokenKind {
         case .rightParen, .rightBrace, .rightSquareBracket, .rightAngle:
@@ -866,6 +936,12 @@ final class Reparser : SyntaxVisitor {
                 content.append(.dedent)
             }
         default: break
+        }
+
+        // Inject mandatory whitespace where we would otherwise create long
+        // identifiers by jamming together things that should be separate.
+        if let p = previousToken, p.isIdentifierLike, tok.isIdentifierLike {
+            content.append(.whitespace)
         }
 
         for t in tok.leadingTrivia {
@@ -891,10 +967,12 @@ final class Reparser : SyntaxVisitor {
             if ancestors.last!.syntax is UnknownStmtSyntax {
                 content.append(.indent)
             }
+        case .comma:
+            content.append(.whitespace)
         default: break
         }
 
-        takeActions(&after, for: tok)
+        apply(&after, to: tok)
     }
 }
 
@@ -920,6 +998,7 @@ for x in p.content {
     switch x {
     case .indent: indentation += 1
     case .dedent: indentation -= 1
+    case .whitespace: break
     case .token(let t, _, let ancestors):
         _ = ancestors
         print(String(repeating: "    ", count: indentation), t.text/*, "\t\t", ancestors*/)
