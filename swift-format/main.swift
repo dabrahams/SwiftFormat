@@ -898,12 +898,23 @@ final class Reparser : SyntaxVisitor {
     }
 }
 
+let p = Reparser()
+
 // Parse a .swift file
 let currentFile = URL(fileURLWithPath: #file)
-let currentFileContents = try String(contentsOf: currentFile)
-let parsed = try SourceFileSyntax.parse(currentFile)
-let p = Reparser()
-p.visit(parsed)
+do {
+    // let currentFileContents = try String(contentsOf: currentFile)
+    let parsed = try SourceFileSyntax.parse(currentFile)
+    p.visit(parsed)
+} catch ParserError.swiftcFailed(let n, let message) {
+    print(message)
+    exit(n == 0 ? 1 : Int32(n))
+}
+catch {
+    print(error)
+    exit(1)
+}
+
 var indentation = 0
 for x in p.content {
     switch x {
@@ -911,7 +922,7 @@ for x in p.content {
     case .dedent: indentation -= 1
     case .token(let t, _, let ancestors):
         _ = ancestors
-        print(String(repeating: "    ", count: indentation), t.text, "\t\t", ancestors)
+        print(String(repeating: "    ", count: indentation), t.text/*, "\t\t", ancestors*/)
     }
     // print("\(#file)\(loc):,\t\(String(repeating: "    ", count: indentation)) '\(token)' \t\t -> \(ancestors)")
     // print(String(repeating: "    ", count: indentation), token)
