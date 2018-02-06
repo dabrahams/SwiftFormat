@@ -198,6 +198,7 @@ struct Token {
 
 struct Injection {
     var whitespaceRequired: Bool = false
+    var newlineRequired: Bool = false
     var dedent: Int16 = 0
     var indent: Int16 = 0
 }
@@ -278,6 +279,7 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.UnknownStmtSyntax) {
+        after[node.id].newlineRequired = true
         visitChildren(node) { super.visit(node) }
     }
 
@@ -676,26 +678,32 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.ContinueStmtSyntax) {
+        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.WhileStmtSyntax) {
+        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DeferStmtSyntax) {
+        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ExpressionStmtSyntax) {
+        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.RepeatWhileStmtSyntax) {
+        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.GuardStmtSyntax) {
+        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
@@ -704,26 +712,32 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.ForInStmtSyntax) {
+        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.SwitchStmtSyntax) {
+        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DoStmtSyntax) {
+        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ReturnStmtSyntax) {
+        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.FallthroughStmtSyntax) {
+        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.BreakStmtSyntax) {
+        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
@@ -750,14 +764,17 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.DeclarationStmtSyntax) {
+        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ThrowStmtSyntax) {
+        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.IfStmtSyntax) {
+        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
