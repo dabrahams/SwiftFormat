@@ -203,9 +203,9 @@ struct Injection {
     var openGroups: Int16 = 0
 }
 
-enum Structure {
+enum OutputElement {
 case openGroup
-case closeGroup
+case closeGroup(matchingOpenIndex: Int)
 case whitespace
 case newline
 case token(syntax: TokenSyntax, location: SourceLoc, ancestors: [Node])
@@ -264,7 +264,12 @@ struct LazyDictionary<K : Hashable, V> {
 }
 
 final class Reparser : SyntaxVisitor {
-    var content: [Structure] = []
+    var content: [OutputElement] = []
+
+    /// A stack of openGroup indices that have not yet been matched by a
+    /// closeGroup.
+    var unmatchedOpenGroups: [Int] = []
+
     var inputLocation = SourceLoc()
     var ancestors: [Node] = []
     var previousToken: TokenSyntax? = nil
@@ -273,12 +278,24 @@ final class Reparser : SyntaxVisitor {
     var before = Injections(default: Injection())
     var after = Injections(default: Injection())
 
+    func openGroup() {
+        unmatchedOpenGroups.append(content.count)
+        content.append(.openGroup)
+    }
+
+    func closeGroup() {
+        content.append(
+            .closeGroup(matchingOpenIndex: unmatchedOpenGroups.removeLast()))
+    }
+
     func apply<T : Syntax & Hashable>(_ a: inout Injections, to s: T) {
         if let i = a.removeValue(forKey: s.id) {
-            for _ in 0..<i.closeGroups { content.append(.closeGroup) }
-            if i.whitespaceRequired { content.append(.whitespace) }
+            for _ in 0..<i.closeGroups { closeGroup() }
+
             if i.newlineRequired { content.append(.newline) }
-            for _ in 0..<i.openGroups { content.append(.openGroup) }
+            else if i.whitespaceRequired { content.append(.whitespace) }
+
+            for _ in 0..<i.openGroups { openGroup() }
         }
     }
 
@@ -970,9 +987,8 @@ final class Reparser : SyntaxVisitor {
 
         switch tok.tokenKind {
         case .rightParen, .rightBrace, .rightSquareBracket, .rightAngle:
-            if ancestors.last!.syntax is UnknownStmtSyntax {
-                content.append(.closeGroup)
-            }
+            if ancestors.last!.syntax is UnknownStmtSyntax { closeGroup() }
+
         default: break
         }
 
@@ -1002,15 +1018,14 @@ final class Reparser : SyntaxVisitor {
 
         switch tok.tokenKind {
         case .leftParen, .leftBrace, .leftSquareBracket, .leftAngle:
-            if ancestors.last!.syntax is UnknownStmtSyntax {
-                content.append(.openGroup)
-            }
+            if ancestors.last!.syntax is UnknownStmtSyntax { openGroup() }
         case .comma:
             content.append(.whitespace)
         default: break
         }
 
         apply(&after, to: tok)
+        previousToken = tok
     }
 }
 
@@ -1031,16 +1046,66 @@ catch {
     exit(1)
 }
 
+let indentSpaces = 4
+let columnLimit = 70
+
+/// For each currently-open group, the indentation level of the line on which it
+/// starts.
+var groupIndentLevels = [0]
+var lineBuffer = [OutputElement]()
+var lineWidth = 0
 var indentation = 0
+var whitespaceRequired = false
+
+func flushLineBuffer() {
+    var b = String(repeating: " ", count: indentation * indentSpaces)
+    for x in lineBuffer {
+        switch x {
+        case .openGroup:
+            break // b += "〈"
+        case .closeGroup:
+            break // b += "〉"
+        case .whitespace:
+            b += " "
+        case .newline:
+            break
+        case .token(let t, _, _):
+            b += t.text
+        }
+    }
+    lineBuffer.removeAll(keepingCapacity: true)
+    print(b)
+    whitespaceRequired = false
+    lineWidth = indentation * indentSpaces
+}
+
 for x in p.content {
     switch x {
-    case .openGroup: indentation += 1
-    case .closeGroup: indentation -= 1
-    case .whitespace, .newline: break
-    case .token(let t, _, let ancestors):
-        _ = ancestors
-        print(String(repeating: "    ", count: indentation), t.text/*, "\t\t", ancestors*/)
-    }
+    case .openGroup:
+        groupIndentLevels.append(indentation)
+        lineBuffer.append(x)
+    case .closeGroup:
+        groupIndentLevels.removeLast()
+        lineBuffer.append(x)
+    case .whitespace:
+        if !lineBuffer.isEmpty {
+            whitespaceRequired = true
+        }
+    case .newline:
+        flushLineBuffer()
+    case .token(let t, _, _):
+        let w = t.text.count + (whitespaceRequired ? 1 : 0)
+        if lineWidth + w > columnLimit {
+            flushLineBuffer()
+        }
+        else if whitespaceRequired {
+            lineBuffer.append(.whitespace)
+        }
+        lineWidth += w
+        lineBuffer.append(x)
+        whitespaceRequired = false
+   }
     // print("\(#file)\(loc):,\t\(String(repeating: "    ", count: indentation)) '\(token)' \t\t -> \(ancestors)")
     // print(String(repeating: "    ", count: indentation), token)
 }
+flushLineBuffer()
