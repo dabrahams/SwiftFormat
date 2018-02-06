@@ -436,6 +436,7 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.ImplicitMemberExprSyntax) {
+        before[node.id].whitespaceRequired = true
         visitChildren(node) { super.visit(node) }
     }
 
@@ -1054,17 +1055,23 @@ let columnLimit = 70
 var groupIndentLevels = [0]
 var lineBuffer = [OutputElement]()
 var lineWidth = 0
-var indentation = 0
+/// The indentation at the beginning of this line
+var bolIndentation = 0
+/// The group nesting level at beginning of this line
+var bolGrouping = groupIndentLevels.count
 var whitespaceRequired = false
 
 func flushLineBuffer() {
-    var b = String(repeating: " ", count: indentation * indentSpaces)
+    var b = String(repeating: " ", count: bolIndentation * indentSpaces)
+    var grouping = bolGrouping
     for x in lineBuffer {
         switch x {
         case .openGroup:
-            break // b += "〈"
+            grouping += 1
+            // b += "〈"
         case .closeGroup:
-            break // b += "〉"
+            grouping -= 1
+            // b += "〉"
         case .whitespace:
             b += " "
         case .newline:
@@ -1075,17 +1082,19 @@ func flushLineBuffer() {
     }
     lineBuffer.removeAll(keepingCapacity: true)
     print(b)
+    if grouping > bolGrouping { bolIndentation += 1 }
+    bolGrouping = grouping
     whitespaceRequired = false
-    lineWidth = indentation * indentSpaces
+    lineWidth = bolIndentation * indentSpaces
 }
 
 for x in p.content {
     switch x {
     case .openGroup:
-        groupIndentLevels.append(indentation)
+        groupIndentLevels.append(bolIndentation)
         lineBuffer.append(x)
     case .closeGroup:
-        groupIndentLevels.removeLast()
+        bolIndentation = groupIndentLevels.removeLast()
         lineBuffer.append(x)
     case .whitespace:
         if !lineBuffer.isEmpty {
