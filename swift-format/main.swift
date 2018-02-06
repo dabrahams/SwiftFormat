@@ -207,6 +207,7 @@ enum Structure {
 case indent
 case dedent
 case whitespace
+case newline
 case token(syntax: TokenSyntax, location: SourceLoc, ancestors: [Node])
 }
 
@@ -215,6 +216,27 @@ typealias SyntaxID = Int
 extension Syntax where Self : Hashable {
     var id: SyntaxID { return hashValue }
 }
+
+protocol _StmtSyntax : StmtSyntax {
+    var semicolon: SwiftSyntax.TokenSyntax? { get }
+    var id: Int { get }
+}
+extension BreakStmtSyntax : _StmtSyntax {}
+extension ContinueStmtSyntax : _StmtSyntax {}
+extension DeclarationStmtSyntax : _StmtSyntax {}
+extension DeferStmtSyntax : _StmtSyntax {}
+extension DoStmtSyntax : _StmtSyntax {}
+extension ExpressionStmtSyntax : _StmtSyntax {}
+extension FallthroughStmtSyntax : _StmtSyntax {}
+extension ForInStmtSyntax : _StmtSyntax {}
+extension GuardStmtSyntax : _StmtSyntax {}
+extension IfStmtSyntax : _StmtSyntax {}
+extension RepeatWhileStmtSyntax : _StmtSyntax {}
+extension ReturnStmtSyntax : _StmtSyntax {}
+extension SwitchStmtSyntax : _StmtSyntax {}
+extension ThrowStmtSyntax : _StmtSyntax {}
+//extension UnknownStmtSyntax : _StmtSyntax {}
+extension WhileStmtSyntax : _StmtSyntax {}
 
 struct LazyDictionary<K : Hashable, V> {
     init(default: V) {
@@ -255,6 +277,7 @@ final class Reparser : SyntaxVisitor {
         if let i = a.removeValue(forKey: s.id) {
             for _ in 0..<i.dedent { content.append(.dedent) }
             if i.whitespaceRequired { content.append(.whitespace) }
+            if i.newlineRequired { content.append(.newline) }
             for _ in 0..<i.indent { content.append(.indent) }
         }
     }
@@ -270,6 +293,13 @@ final class Reparser : SyntaxVisitor {
         return r
     }
 
+    func injectMandatoryNewlines(in statements: StmtListSyntax) {
+        for s in statements.dropLast() {
+            if (s as? _StmtSyntax)?.semicolon != nil { continue }
+            after[(s as! AnyHashable).hashValue].newlineRequired = true
+        }
+    }
+
     override func visit(_ node: SwiftSyntax.UnknownDeclSyntax) {
         visitChildren(node) { super.visit(node) }
     }
@@ -279,7 +309,6 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.UnknownStmtSyntax) {
-        after[node.id].newlineRequired = true
         visitChildren(node) { super.visit(node) }
     }
 
@@ -470,6 +499,7 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.ClosureExprSyntax) {
+        injectMandatoryNewlines(in: node.statements)
         after[node.signature.map { $0.id } ?? node.leftBrace.id].indent += 1
         before[node.rightBrace.id].dedent += 1
         visitChildren(node) { super.visit(node) }
@@ -568,10 +598,12 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.ElseifDirectiveClauseSyntax) {
+        injectMandatoryNewlines(in: node.body)
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.IfConfigDeclSyntax) {
+        injectMandatoryNewlines(in: node.body)
         visitChildren(node) { super.visit(node) }
     }
 
@@ -614,6 +646,7 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.TopLevelCodeDeclSyntax) {
+        injectMandatoryNewlines(in: node.body)
         visitChildren(node) { super.visit(node) }
     }
 
@@ -630,6 +663,7 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.ElseDirectiveClauseSyntax) {
+        injectMandatoryNewlines(in: node.body)
         visitChildren(node) { super.visit(node) }
     }
 
@@ -678,32 +712,26 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.ContinueStmtSyntax) {
-        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.WhileStmtSyntax) {
-        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DeferStmtSyntax) {
-        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ExpressionStmtSyntax) {
-        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.RepeatWhileStmtSyntax) {
-        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.GuardStmtSyntax) {
-        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
@@ -712,36 +740,31 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.ForInStmtSyntax) {
-        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.SwitchStmtSyntax) {
-        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.DoStmtSyntax) {
-        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ReturnStmtSyntax) {
-        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.FallthroughStmtSyntax) {
-        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.BreakStmtSyntax) {
-        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.CodeBlockSyntax) {
+        injectMandatoryNewlines(in: node.statements)
         after[node.openBrace.id].indent += 1
         before[node.closeBrace.id].dedent += 1
         visitChildren(node) { super.visit(node) }
@@ -764,17 +787,14 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.DeclarationStmtSyntax) {
-        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.ThrowStmtSyntax) {
-        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
     override func visit(_ node: SwiftSyntax.IfStmtSyntax) {
-        if node.semicolon == nil { after[node.id].newlineRequired = true }
         visitChildren(node) { super.visit(node) }
     }
 
@@ -787,6 +807,7 @@ final class Reparser : SyntaxVisitor {
     }
 
     override func visit(_ node: SwiftSyntax.SwitchCaseSyntax) {
+        injectMandatoryNewlines(in: node.body)
         visitChildren(node) { super.visit(node) }
     }
 
@@ -1015,7 +1036,7 @@ for x in p.content {
     switch x {
     case .indent: indentation += 1
     case .dedent: indentation -= 1
-    case .whitespace: break
+    case .whitespace, .newline: break
     case .token(let t, _, let ancestors):
         _ = ancestors
         print(String(repeating: "    ", count: indentation), t.text/*, "\t\t", ancestors*/)
