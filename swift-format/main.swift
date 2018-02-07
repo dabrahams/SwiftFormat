@@ -1060,16 +1060,25 @@ var bolIndentation = 0
 /// The group nesting level at beginning of this line
 var bolGrouping = groupIndentLevels.count
 var whitespaceRequired = false
+var lineUnmatchedIndices: [Int] = []
 
 func flushLineBuffer() {
+    print("% lineBuffer:", lineBuffer)
+    print("% lineUnmatchedIndices:", lineUnmatchedIndices)
+
     var b = String(repeating: " ", count: bolIndentation * indentSpaces)
     var grouping = bolGrouping
-    for x in lineBuffer {
+
+    // flush through the first unmatched open grouping delimiter
+    let flushCount = lineUnmatchedIndices.first.map { $0 + 1 } ?? lineBuffer.count
+    for x in lineBuffer[..<flushCount] {
         switch x {
         case .openGroup:
+            groupIndentLevels.append(bolIndentation)
             grouping += 1
             // b += "〈"
         case .closeGroup:
+            bolIndentation = groupIndentLevels.removeLast()
             grouping -= 1
             // b += "〉"
         case .whitespace:
@@ -1080,7 +1089,14 @@ func flushLineBuffer() {
             b += t.text
         }
     }
-    lineBuffer.removeAll(keepingCapacity: true)
+    lineBuffer.removeFirst(flushCount)
+    if !lineUnmatchedIndices.isEmpty {
+        for i in 1..<lineUnmatchedIndices.count {
+            lineUnmatchedIndices[i - 1] = lineUnmatchedIndices[i] - flushCount
+        }
+        lineUnmatchedIndices.removeLast()
+    }
+
     print(b)
     if grouping > bolGrouping { bolIndentation += 1 }
     bolGrouping = grouping
@@ -1091,11 +1107,13 @@ func flushLineBuffer() {
 for x in p.content {
     switch x {
     case .openGroup:
-        groupIndentLevels.append(bolIndentation)
+        lineUnmatchedIndices.append(lineBuffer.count)
         lineBuffer.append(x)
     case .closeGroup:
-        bolIndentation = groupIndentLevels.removeLast()
         lineBuffer.append(x)
+        if !lineUnmatchedIndices.isEmpty {
+            lineUnmatchedIndices.removeLast()
+        }
     case .whitespace:
         if !lineBuffer.isEmpty {
             whitespaceRequired = true
