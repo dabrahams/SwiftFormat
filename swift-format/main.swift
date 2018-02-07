@@ -106,7 +106,7 @@ struct SourceLoc {
 
 extension SourceLoc : CustomStringConvertible {
     var description: String {
-        return ":\(line + 1):\(column + 1)"
+        return "\(line + 1).\(column + 1)"
     }
 }
 
@@ -272,12 +272,16 @@ final class Reparser : SyntaxVisitor {
     var before = Injections(default: Injection())
     var after = Injections(default: Injection())
 
+    var nestingLevel = 0 // just used for debug output
+
     func openGroup() {
         unmatchedOpenGroups.append(content.count)
         content.append(.openGroup)
+        nestingLevel += 1
     }
 
     func closeGroup() {
+        nestingLevel -= 1
         content.append(
             .closeGroup(matchingOpenIndex: unmatchedOpenGroups.removeLast()))
     }
@@ -1007,6 +1011,19 @@ final class Reparser : SyntaxVisitor {
             inputLocation.traverse(t)
         }
 
+        let tokenLocation = inputLocation
+        inputLocation.traverseNonTrivia(tok)
+#if false
+        /// Dump tokens and syntax
+        var endLocation = inputLocation
+        if endLocation.column > 0 { endLocation.column -= 1 }
+        print("""
+            \(#file):\(tokenLocation)-\(endLocation):,\t\
+            \(String(repeating: "    ", count: nestingLevel)) \
+            '\(tok.text)' \t\t -> \(ancestors)
+            """
+        )
+#endif
         content.append(
             .token(
                 syntax: tok/*,
@@ -1014,8 +1031,6 @@ final class Reparser : SyntaxVisitor {
                 ancestors: ancestors*/
             )
         )
-
-        inputLocation.traverseNonTrivia(tok)
 
         for t in tok.trailingTrivia {
             inputLocation.traverse(t)
@@ -1066,7 +1081,7 @@ var bolGrouping = groupIndentLevels.count
 var whitespaceRequired = false
 var lineUnmatchedIndices: [Int] = []
 
-func flushLineBuffer() {
+func outputLine() {
     var b = String(repeating: " ", count: bolIndentation * indentSpaces)
     var grouping = bolGrouping
 
@@ -1106,6 +1121,10 @@ func flushLineBuffer() {
     lineWidth = bolIndentation * indentSpaces
 }
 
+func flushLineBuffer() {
+    while !lineBuffer.isEmpty { outputLine() }
+}
+
 for x in p.content {
     switch x {
     case .openGroup:
@@ -1116,25 +1135,28 @@ for x in p.content {
         if !lineUnmatchedIndices.isEmpty {
             lineUnmatchedIndices.removeLast()
         }
+        if groupIndentLevels.count == bolGrouping {
+            flushLineBuffer()
+        }
     case .whitespace:
         if !lineBuffer.isEmpty {
             whitespaceRequired = true
         }
     case .newline:
-        while !lineBuffer.isEmpty{ flushLineBuffer() }
+        flushLineBuffer()
     case .token(let t/*, _, _*/):
-        let w = t.text.count + (whitespaceRequired ? 1 : 0)
-        if lineWidth + w > columnLimit {
-            flushLineBuffer()
+        let s = whitespaceRequired ? 1 : 0
+        let w = t.text.count
+        if lineWidth + s + w > columnLimit {
+            outputLine()
         }
         else if whitespaceRequired {
             lineBuffer.append(.whitespace)
+            lineWidth += 1
         }
         lineWidth += w
         lineBuffer.append(x)
         whitespaceRequired = false
    }
-    // print("\(#file)\(loc):,\t\(String(repeating: "    ", count: indentation)) '\(token)' \t\t -> \(ancestors)")
-    // print(String(repeating: "    ", count: indentation), token)
 }
-while !lineBuffer.isEmpty{ flushLineBuffer() }
+flushLineBuffer()
