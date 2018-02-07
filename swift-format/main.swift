@@ -190,12 +190,6 @@ extension TokenSyntax {
     }
 }
 
-struct Token {
-    let syntax: TokenSyntax
-    let location: SourceLoc
-    let ancestors: [Node]
-}
-
 struct Injection {
     var whitespaceRequired: Bool = false
     var newlineRequired: Bool = false
@@ -208,7 +202,7 @@ case openGroup
 case closeGroup(matchingOpenIndex: Int)
 case whitespace
 case newline
-case token(syntax: TokenSyntax, location: SourceLoc, ancestors: [Node])
+case token(syntax: TokenSyntax/*, location: SourceLoc, ancestors: [Node]*/)
 }
 
 typealias SyntaxID = Int
@@ -519,7 +513,9 @@ final class Reparser : SyntaxVisitor {
     override func visit(_ node: SwiftSyntax.ClosureExprSyntax) {
         injectMandatoryNewlines(in: node.statements)
         after[node.signature.map { $0.id } ?? node.leftBrace.id].openGroups += 1
+        after[node.leftBrace.id].whitespaceRequired = true
         before[node.rightBrace.id].closeGroups += 1
+        before[node.rightBrace.id].whitespaceRequired = true
         visitChildren(node) { super.visit(node) }
     }
 
@@ -655,7 +651,10 @@ final class Reparser : SyntaxVisitor {
 
     override func visit(_ node: SwiftSyntax.MemberDeclBlockSyntax) {
         after[node.leftBrace.id].openGroups += 1
+        after[node.leftBrace.id].whitespaceRequired = true
+        before[node.leftBrace.id].whitespaceRequired = true
         before[node.rightBrace.id].closeGroups += 1
+        before[node.rightBrace.id].whitespaceRequired = true
         visitChildren(node) { super.visit(node) }
     }
 
@@ -713,7 +712,9 @@ final class Reparser : SyntaxVisitor {
 
     override func visit(_ node: SwiftSyntax.AccessorBlockSyntax) {
         after[node.leftBrace.id].openGroups += 1
+        after[node.leftBrace.id].whitespaceRequired = true
         before[node.rightBrace.id].closeGroups += 1
+        before[node.rightBrace.id].whitespaceRequired = true
         visitChildren(node) { super.visit(node) }
     }
 
@@ -784,7 +785,10 @@ final class Reparser : SyntaxVisitor {
     override func visit(_ node: SwiftSyntax.CodeBlockSyntax) {
         injectMandatoryNewlines(in: node.statements)
         after[node.openBrace.id].openGroups += 1
+        after[node.openBrace.id].whitespaceRequired = true
+        before[node.openBrace.id].whitespaceRequired = true
         before[node.closeBrace.id].closeGroups += 1
+        before[node.closeBrace.id].whitespaceRequired = true
         visitChildren(node) { super.visit(node) }
     }
 
@@ -1005,9 +1009,9 @@ final class Reparser : SyntaxVisitor {
 
         content.append(
             .token(
-                syntax: tok,
+                syntax: tok/*,
                 location: inputLocation,
-                ancestors: ancestors
+                ancestors: ancestors*/
             )
         )
 
@@ -1063,9 +1067,6 @@ var whitespaceRequired = false
 var lineUnmatchedIndices: [Int] = []
 
 func flushLineBuffer() {
-    print("% lineBuffer:", lineBuffer)
-    print("% lineUnmatchedIndices:", lineUnmatchedIndices)
-
     var b = String(repeating: " ", count: bolIndentation * indentSpaces)
     var grouping = bolGrouping
 
@@ -1076,6 +1077,7 @@ func flushLineBuffer() {
         case .openGroup:
             groupIndentLevels.append(bolIndentation)
             grouping += 1
+            if grouping == bolGrouping { bolIndentation += 1 }
             // b += "〈"
         case .closeGroup:
             bolIndentation = groupIndentLevels.removeLast()
@@ -1085,7 +1087,7 @@ func flushLineBuffer() {
             b += " "
         case .newline:
             break
-        case .token(let t, _, _):
+        case .token(let t/*, _, _*/):
             b += t.text
         }
     }
@@ -1119,8 +1121,8 @@ for x in p.content {
             whitespaceRequired = true
         }
     case .newline:
-        flushLineBuffer()
-    case .token(let t, _, _):
+        while !lineBuffer.isEmpty{ flushLineBuffer() }
+    case .token(let t/*, _, _*/):
         let w = t.text.count + (whitespaceRequired ? 1 : 0)
         if lineWidth + w > columnLimit {
             flushLineBuffer()
@@ -1135,4 +1137,4 @@ for x in p.content {
     // print("\(#file)\(loc):,\t\(String(repeating: "    ", count: indentation)) '\(token)' \t\t -> \(ancestors)")
     // print(String(repeating: "    ", count: indentation), token)
 }
-flushLineBuffer()
+while !lineBuffer.isEmpty{ flushLineBuffer() }
